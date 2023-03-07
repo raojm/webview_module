@@ -5,7 +5,9 @@
 #ifndef NATIVE_WEBVIEW_REGISTER_TYPES_H
 #define NATIVE_WEBVIEW_REGISTER_TYPES_H
 
-void register_webview_module_types();
-void unregister_webview_module_types();
+#include "modules/register_module_types.h"
+
+void initialize_webview_module_module(ModuleInitializationLevel p_level);
+void uninitialize_webview_module_module(ModuleInitializationLevel p_level);
 
 #endif // NATIVE_WEBVIEW_REGISTER_TYPES_H

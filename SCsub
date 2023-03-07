@@ -9,7 +9,7 @@ env_native_webview.disable_warnings()
 env_native_webview.add_source_files(env.modules_sources, "register_types.cpp")
 env_native_webview.add_source_files(env.modules_sources, "webview_common.cpp")
 
-if env["platform"] == "osx" or env["platform"] == "iphone" or env["platform"] == "tvos":
+if env["platform"] == "macos" or env["platform"] == "iphone" or env["platform"] == "tvos":
 	env.Append(LINKFLAGS=["-framework", "WebKit"])
 	env_native_webview.add_source_files(env.modules_sources, "webview_wk.mm")
 

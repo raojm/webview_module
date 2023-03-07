@@ -2,12 +2,14 @@
 /*  webview_wk.mm                                                        */
 /*************************************************************************/
 
-#include "webview.h"
-#include "core/os/os.h"
 
 #include <WebKit/WebKit.h>
 #include <WebKit/WKNavigationDelegate.h>
 #include <Foundation/NSURLError.h>
+
+
+#include "webview.h"
+#include "core/os/os.h"
 
 #if defined(IPHONE_ENABLED)
 #include "platform/iphone/app_delegate.h"
@@ -82,17 +84,17 @@
 
 	if (url.begins_with("res") || url.begins_with("user")) {
 		Error err;
-		FileAccess *f = FileAccess::open(url, FileAccess::READ, &err);
+		Ref<FileAccess> f = FileAccess::open(url, FileAccess::READ, &err);
 		if (err != OK) {
 			[urlSchemeTask didReceiveResponse:[[NSHTTPURLResponse alloc] initWithURL:requestURL statusCode:404 HTTPVersion:@"HTTP/1.1" headerFields:nil]];
 			[urlSchemeTask didFinish];
 		} else {
-			PoolVector<uint8_t> data;
-			data.resize(f->get_len());
-			f->get_buffer(data.write().ptr(), f->get_len());
+			PackedByteArray data;
+			data.resize(f->get_length());
+			f->get_buffer(data.ptrw(), f->get_length());
 
 			[urlSchemeTask didReceiveResponse:[[NSURLResponse alloc] initWithURL:requestURL MIMEType:@"text/html" expectedContentLength:(NSInteger)data.size() textEncodingName:nil]];
-			[urlSchemeTask didReceiveData:[[NSData alloc] initWithBytes:(const void *)data.read().ptr() length:(NSUInteger)data.size()]];
+			[urlSchemeTask didReceiveData:[[NSData alloc] initWithBytes:(const void *)data.ptr() length:(NSUInteger)data.size()]];
 			[urlSchemeTask didFinish];
 		}
 	} else {
@@ -133,7 +135,7 @@ void WebViewOverlay::_notification(int p_what) {
 		} break;
 		case NOTIFICATION_INTERNAL_PROCESS: {
 			if (!Engine::get_singleton()->is_editor_hint() && (data->view == nullptr) && (err_status == 0)) {
-#if defined(OSX_ENABLED)
+#if 1
 				NSView *main_view = [[[NSApplication sharedApplication] mainWindow] contentView];
 #elif defined(IPHONE_ENABLED)
 				UIView *main_view = AppDelegate.viewController.godotView;
@@ -155,9 +157,9 @@ void WebViewOverlay::_notification(int p_what) {
 					WKUserScript *scr = [[WKUserScript alloc] initWithSource:(NSString *)@"function webviewMessage(s){window.webkit.messageHandlers.callback.postMessage(s);}" injectionTime:WKUserScriptInjectionTimeAtDocumentStart forMainFrameOnly:true];
 					[[webViewConfig userContentController] addUserScript:scr];
 
-					float sc = OS::get_singleton()->get_screen_max_scale();
-					Rect2i rect = get_window_rect();
-					float wh = OS::get_singleton()->get_window_size().y / sc;
+					float sc = DisplayServer::get_singleton()->screen_get_max_scale();
+					Rect2i rect = get_global_rect();
+					float wh = DisplayServer::get_singleton()->window_get_size().y / sc;
 					WKWebView* m_webView = [[WKWebView alloc] initWithFrame:CGRectMake(rect.position.x / sc, wh - rect.position.y / sc - rect.size.height / sc, rect.size.width / sc, rect.size.height / sc) configuration:webViewConfig];
 
 					[m_webView setNavigationDelegate:nav_handle];
@@ -196,13 +198,13 @@ void WebViewOverlay::_notification(int p_what) {
 			} else if (Engine::get_singleton()->is_editor_hint()) {
 				_draw_placeholder();
 			}
-		} FALLTHROUGH;
+		} [[fallthrough]];
 		case NOTIFICATION_MOVED_IN_PARENT:
 		case NOTIFICATION_RESIZED: {
 			if (data->view != nullptr) {
-				float sc = OS::get_singleton()->get_screen_max_scale();
-				Rect2i rect = get_window_rect();
-				float wh = OS::get_singleton()->get_window_size().y / sc;
+				float sc = DisplayServer::get_singleton()->screen_get_max_scale();
+				Rect2i rect = get_global_rect();
+				float wh = DisplayServer::get_singleton()->window_get_size().y / sc;
 				[data->view setFrame:CGRectMake(rect.position.x / sc, wh - rect.position.y / sc - rect.size.height / sc, rect.size.width / sc, rect.size.height / sc)];
 			}
 		} break;
@@ -232,7 +234,7 @@ void WebViewOverlay::get_snapshot(int p_width) {
 
 
 	[data->view takeSnapshotWithConfiguration:wkSnapshotConfig
-#if defined(OSX_ENABLED)
+#if 1
 		completionHandler:^(NSImage * _Nullable image, NSError * _Nullable error) {
 #elif defined(IPHONE_ENABLED)
 		completionHandler:^(UIImage * _Nullable image, NSError * _Nullable error) {
@@ -240,19 +242,20 @@ void WebViewOverlay::get_snapshot(int p_width) {
 		#error Unsupported platform!
 #endif
 		if (image != nullptr) {
-			CGImageRef imageRef = [image CGImage];
+			// CGImageRef imageRef = [image CGImage];
+            NSRect imageRect = NSMakeRect(0, 0, image.size.width, image.size.height);
+            CGImageRef imageRef = [image CGImageForProposedRect:&imageRect context:NULL hints:nil];
 			NSUInteger width = CGImageGetWidth(imageRef);
 			NSUInteger height = CGImageGetHeight(imageRef);
 
-			PoolVector<uint8_t> imgdata;
+			PackedByteArray imgdata;
 			imgdata.resize(width * height * 4);
-			PoolVector<uint8_t>::Write wr = imgdata.write();
 
 			NSUInteger bytesPerPixel = 4;
 			NSUInteger bytesPerRow = bytesPerPixel * width;
 			NSUInteger bitsPerComponent = 8;
 			CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-			CGContextRef context = CGBitmapContextCreate(wr.ptr(), width, height, bitsPerComponent, bytesPerRow, colorSpace, kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
+			CGContextRef context = CGBitmapContextCreate(imgdata.ptrw(), width, height, bitsPerComponent, bytesPerRow, colorSpace, kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
 			CGColorSpaceRelease(colorSpace);
 
 			CGContextDrawImage(context, CGRectMake(0, 0, width, height), imageRef);

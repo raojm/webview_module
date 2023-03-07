@@ -42,7 +42,7 @@ void WebViewOverlay::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "no_background"), "set_no_background", "get_no_background");
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "url"), "set_url", "get_url");
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "user_agent"), "set_user_agent", "get_user_agent");
-	ADD_PROPERTY(PropertyInfo(Variant::REAL, "zoom_level"), "set_zoom_level", "get_zoom_level");
+	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "zoom_level"), "set_zoom_level", "get_zoom_level");
 
 	ADD_SIGNAL(MethodInfo("callback", PropertyInfo(Variant::STRING, "url")));
 	ADD_SIGNAL(MethodInfo("new_window", PropertyInfo(Variant::STRING, "url")));
@@ -52,7 +52,7 @@ void WebViewOverlay::_bind_methods() {
 }
 
 void WebViewOverlay::_draw_placeholder() {
-	Ref<Font> font = get_font("font", "Label");
+	Ref<Font> font = get_theme_font("font", "Label");
 	Size2i size = get_size();
 
 	// Main border
@@ -63,22 +63,22 @@ void WebViewOverlay::_draw_placeholder() {
 
 	if (icon_main.is_null()) {
 		Ref<Image> image = memnew(Image(__icon_dummy, __icon_dummy_len));
-		icon_main.instance();
-		icon_main->create_from_image(image, Texture::FLAG_VIDEO_SURFACE);
+		icon_main.instantiate();
+		icon_main->create_from_image(image);
 	}
 
 	icon_main->draw(get_canvas_item(), Vector2((size.x - 64) / 2, 20));
 
 	Size2i url_size = font->get_string_size(home_url);
-	font->draw(get_canvas_item(), Vector2((size.x - url_size.x) / 2, 100 +url_size.y) + Vector2(1, 1), home_url, Color(0, 0, 0, 0.5));
-	font->draw(get_canvas_item(), Vector2((size.x - url_size.x) / 2, 100 +url_size.y) + Vector2(-1, 1), home_url, Color(0, 0, 0, 0.5));
-	font->draw(get_canvas_item(), Vector2((size.x - url_size.x) / 2, 100 +url_size.y) + Vector2(1, -1), home_url, Color(0, 0, 0, 0.5));
-	font->draw(get_canvas_item(), Vector2((size.x - url_size.x) / 2, 100 +url_size.y) + Vector2(-1, -1), home_url, Color(0, 0, 0, 0.5));
-	font->draw(get_canvas_item(), Vector2((size.x - url_size.x) / 2, 100 +url_size.y), home_url, Color(1, 1, 1));
+	font->draw_string(get_canvas_item(), Vector2((size.x - url_size.x) / 2, 100 +url_size.y) + Vector2(1, 1), home_url, HORIZONTAL_ALIGNMENT_LEFT, -1, Font::DEFAULT_FONT_SIZE, Color(0, 0, 0, 0.5));
+	font->draw_string(get_canvas_item(), Vector2((size.x - url_size.x) / 2, 100 +url_size.y) + Vector2(-1, 1), home_url, HORIZONTAL_ALIGNMENT_LEFT, -1, Font::DEFAULT_FONT_SIZE,  Color(0, 0, 0, 0.5));
+	font->draw_string(get_canvas_item(), Vector2((size.x - url_size.x) / 2, 100 +url_size.y) + Vector2(1, -1), home_url, HORIZONTAL_ALIGNMENT_LEFT, -1, Font::DEFAULT_FONT_SIZE,  Color(0, 0, 0, 0.5));
+	font->draw_string(get_canvas_item(), Vector2((size.x - url_size.x) / 2, 100 +url_size.y) + Vector2(-1, -1), home_url, HORIZONTAL_ALIGNMENT_LEFT, -1, Font::DEFAULT_FONT_SIZE,  Color(0, 0, 0, 0.5));
+	font->draw_string(get_canvas_item(), Vector2((size.x - url_size.x) / 2, 100 +url_size.y), home_url, HORIZONTAL_ALIGNMENT_LEFT, -1, Font::DEFAULT_FONT_SIZE,  Color(1, 1, 1));
 }
 
 void WebViewOverlay::_draw_error(const String &p_error) {
-	Ref<Font> font = get_font("font", "Label");
+	Ref<Font> font = get_theme_font("font", "Label");
 	Size2i size = get_size();
 
 	// Main border
@@ -89,8 +89,8 @@ void WebViewOverlay::_draw_error(const String &p_error) {
 
 	if (icon_error.is_null()) {
 		Ref<Image> image = memnew(Image(__icon_error, __icon_error_len));
-		icon_error.instance();
-		icon_error->create_from_image(image, Texture::FLAG_VIDEO_SURFACE);
+		icon_error.instantiate();
+		icon_error->create_from_image(image);
 	}
 
 	icon_error->draw(get_canvas_item(), Vector2((size.x - 64) / 2, 20));
@@ -100,15 +100,15 @@ void WebViewOverlay::_draw_error(const String &p_error) {
 	Size2i er_size = font->get_string_size(p_error);
 	Size2i ti_size = font->get_string_size(err_ti);
 
-	font->draw(get_canvas_item(), Vector2((size.x - ti_size.x) / 2, 100 + ti_size.y) + Vector2(1, 1), err_ti, Color(0, 0, 0, 0.5));
-	font->draw(get_canvas_item(), Vector2((size.x - ti_size.x) / 2, 100 + ti_size.y) + Vector2(-1, 1), err_ti, Color(0, 0, 0, 0.5));
-	font->draw(get_canvas_item(), Vector2((size.x - ti_size.x) / 2, 100 + ti_size.y) + Vector2(1, -1), err_ti, Color(0, 0, 0, 0.5));
-	font->draw(get_canvas_item(), Vector2((size.x - ti_size.x) / 2, 100 + ti_size.y) + Vector2(-1, -1), err_ti, Color(0, 0, 0, 0.5));
-	font->draw(get_canvas_item(), Vector2((size.x - ti_size.x) / 2, 100 + ti_size.y), err_ti, Color(1, 0, 0));
+	font->draw_string(get_canvas_item(), Vector2((size.x - ti_size.x) / 2, 100 + ti_size.y) + Vector2(1, 1), err_ti, HORIZONTAL_ALIGNMENT_LEFT, -1, Font::DEFAULT_FONT_SIZE,  Color(0, 0, 0, 0.5));
+	font->draw_string(get_canvas_item(), Vector2((size.x - ti_size.x) / 2, 100 + ti_size.y) + Vector2(-1, 1), err_ti, HORIZONTAL_ALIGNMENT_LEFT, -1, Font::DEFAULT_FONT_SIZE,  Color(0, 0, 0, 0.5));
+	font->draw_string(get_canvas_item(), Vector2((size.x - ti_size.x) / 2, 100 + ti_size.y) + Vector2(1, -1), err_ti, HORIZONTAL_ALIGNMENT_LEFT, -1, Font::DEFAULT_FONT_SIZE,  Color(0, 0, 0, 0.5));
+	font->draw_string(get_canvas_item(), Vector2((size.x - ti_size.x) / 2, 100 + ti_size.y) + Vector2(-1, -1), err_ti, HORIZONTAL_ALIGNMENT_LEFT, -1, Font::DEFAULT_FONT_SIZE,  Color(0, 0, 0, 0.5));
+	font->draw_string(get_canvas_item(), Vector2((size.x - ti_size.x) / 2, 100 + ti_size.y), err_ti, HORIZONTAL_ALIGNMENT_LEFT, -1, Font::DEFAULT_FONT_SIZE,  Color(1, 0, 0));
 
-	font->draw(get_canvas_item(), Vector2((size.x - er_size.x) / 2, 100 + er_size.y + 10 + ti_size.y) + Vector2(1, 1), p_error, Color(0, 0, 0, 0.5));
-	font->draw(get_canvas_item(), Vector2((size.x - er_size.x) / 2, 100 + er_size.y + 10 + ti_size.y) + Vector2(-1, 1), p_error, Color(0, 0, 0, 0.5));
-	font->draw(get_canvas_item(), Vector2((size.x - er_size.x) / 2, 100 + er_size.y + 10 + ti_size.y) + Vector2(1, -1), p_error, Color(0, 0, 0, 0.5));
-	font->draw(get_canvas_item(), Vector2((size.x - er_size.x) / 2, 100 + er_size.y + 10 + ti_size.y) + Vector2(-1, -1), p_error, Color(0, 0, 0, 0.5));
-	font->draw(get_canvas_item(), Vector2((size.x - er_size.x) / 2, 100 + er_size.y + 10 + ti_size.y), p_error, Color(1, 0, 0));
+	font->draw_string(get_canvas_item(), Vector2((size.x - er_size.x) / 2, 100 + er_size.y + 10 + ti_size.y) + Vector2(1, 1), p_error, HORIZONTAL_ALIGNMENT_LEFT, -1, Font::DEFAULT_FONT_SIZE,  Color(0, 0, 0, 0.5));
+	font->draw_string(get_canvas_item(), Vector2((size.x - er_size.x) / 2, 100 + er_size.y + 10 + ti_size.y) + Vector2(-1, 1), p_error, HORIZONTAL_ALIGNMENT_LEFT, -1, Font::DEFAULT_FONT_SIZE,  Color(0, 0, 0, 0.5));
+	font->draw_string(get_canvas_item(), Vector2((size.x - er_size.x) / 2, 100 + er_size.y + 10 + ti_size.y) + Vector2(1, -1), p_error, HORIZONTAL_ALIGNMENT_LEFT, -1, Font::DEFAULT_FONT_SIZE,  Color(0, 0, 0, 0.5));
+	font->draw_string(get_canvas_item(), Vector2((size.x - er_size.x) / 2, 100 + er_size.y + 10 + ti_size.y) + Vector2(-1, -1), p_error, HORIZONTAL_ALIGNMENT_LEFT, -1, Font::DEFAULT_FONT_SIZE,  Color(0, 0, 0, 0.5));
+	font->draw_string(get_canvas_item(), Vector2((size.x - er_size.x) / 2, 100 + er_size.y + 10 + ti_size.y), p_error, HORIZONTAL_ALIGNMENT_LEFT, -1, Font::DEFAULT_FONT_SIZE,  Color(1, 0, 0));
 }
